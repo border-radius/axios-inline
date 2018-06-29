@@ -1,6 +1,8 @@
 ## axios-inline
 
-Axios-like client for recursive fetching web resources.
+Axios-like client for recursive fetching web resources and bundling them into one file.
+
+![Magic](http://deaddrop.ftp.sh/Ky7SajVRWx_v.jpg)
 
 ### Install
 
