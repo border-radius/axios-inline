@@ -1,0 +1,30 @@
+{
+  "name": "axios-inline",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --bail tests/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/border-radius/axios-inline.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/border-radius/axios-inline/issues"
+  },
+  "homepage": "https://github.com/border-radius/axios-inline#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "bluebird": "^3.5.1",
+    "cheerio": "^1.0.0-rc.2",
+    "css": "^2.2.3"
+  },
+  "devDependencies": {
+    "express": "^4.16.3",
+    "mocha": "^5.2.0"
+  }
+}
