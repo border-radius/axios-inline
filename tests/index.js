@@ -86,8 +86,7 @@ describe('Axios-inline', () => {
 
     it('should get html with image embedded', done => {
         const url = [TEST_WEBSERVER_ADDRESS, 'image.html'].join('/');
-        const pngPath = path.join(__dirname, 'pages/image.png');
-        const pngContent = fs.readFileSync(pngPath);
+        const pngContent = fs.readFileSync(path.join(__dirname, 'pages/image.png'));
         const pngContentBase64 = btoa(pngContent);
         request(url).then(response => {
             const embeds = getEmbedded(response.data);
@@ -118,6 +117,21 @@ describe('Axios-inline', () => {
             assert.equal(embeds.length, 1);
             const embeddedCSS = atob(embeds[0]);
             assert.equal(removeSpaces(embeddedCSS), removeSpaces(cssContent));
+            done();
+        }).catch(done);
+    });
+
+    it('should get html with image embedded in embedded css', done => {
+        const url = [TEST_WEBSERVER_ADDRESS, 'css-image.html'].join('/');
+        const pngContent = fs.readFileSync(path.join(__dirname, 'pages/image.png'));
+        const pngContentBase64 = btoa(pngContent);
+        request(url).then(response => {
+            const embeds = getEmbedded(response.data);
+            assert.equal(embeds.length, 1);
+            const embeddedCSS = atob(embeds[0]);
+            const cssEmbeds = getEmbedded(embeddedCSS);
+            assert.equal(cssEmbeds.length, 1);
+            assert.equal(cssEmbeds[0], pngContentBase64);
             done();
         }).catch(done);
     });
