@@ -1,6 +1,7 @@
 const url = require('url');
 const cheerio = require('cheerio');
 const consts = require('./consts');
+const parseCSS = require('./parseCSS');
 
 function parseHTML(baseUrl, html) {
     const query = cheerio.load(html);
@@ -8,9 +9,17 @@ function parseHTML(baseUrl, html) {
     return {
         // return list of links to page components (images, styles, scripts)
         getComponentsUrls: () => {
-            return query(consts.COMPONENTS_QUERY).map(function () {
+            const styleLinks = query('style').map(function () {
+                const cssContent = query(this).html();
+                const css = parseCSS(baseUrl, cssContent);
+                return css.getComponentsUrls();
+            }).get();
+
+            const links = query(consts.COMPONENTS_QUERY).map(function () {
                 return query(this).prop('src') || query(this).prop('href');
-            }).get()
+            }).get();
+
+            return [].concat.apply(links, styleLinks)
             .map(link => {
                 try {
                     return link ? url.resolve(baseUrl, link) : null
@@ -55,6 +64,12 @@ function parseHTML(baseUrl, html) {
                 }
 
                 return true;
+            });
+
+            query('style').each(function () {
+                const cssContent = query(this).html();
+                const css = parseCSS(baseUrl, cssContent);
+                query(this).html(css.embedComponents(components));
             });
 
             return query.html();

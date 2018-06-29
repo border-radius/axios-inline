@@ -109,4 +109,16 @@ describe('Axios-inline', () => {
             done();
         }).catch(done);
     });
+
+    it('should get html with css embedded in page', done => {
+        const url = [TEST_WEBSERVER_ADDRESS, 'inline-css.html'].join('/');
+        const cssContent = fs.readFileSync(path.join(__dirname, 'pages/style.css'), { encoding: 'utf8' });
+        request(url).then(response => {
+            const embeds = getEmbedded(response.data);
+            assert.equal(embeds.length, 1);
+            const embeddedCSS = atob(embeds[0]);
+            assert.equal(removeSpaces(embeddedCSS), removeSpaces(cssContent));
+            done();
+        }).catch(done);
+    });
 });

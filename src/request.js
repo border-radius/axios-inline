@@ -52,7 +52,9 @@ function request(targetUrl, options) {
                 return response;
         }
     }).catch(e => {
-        console.log(targetUrl, e.message);
+        console.log(targetUrl);
+        console.log(e.stack);
+        console.log('\n\n');
     });
 };
 
