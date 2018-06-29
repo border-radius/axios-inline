@@ -16,9 +16,12 @@ function atob (str) {
 }
 
 function getEmbedded (input) {
-    return input.toString()
-    .match(/data:[^;]+;base64,([^"']+)/g)
-    .map(embed => embed.slice(embed.indexOf(',')));
+    const match = input.toString().match(/data:[^;]+;base64,([^"']+)/g);
+    return (match || []).map(embed => embed.slice(embed.indexOf(',') + 1));
+}
+
+function removeSpaces (str) {
+    return str.toString().replace(/\s+/g, '');
 }
 
 describe('Axios-inline', () => {
@@ -35,52 +38,48 @@ describe('Axios-inline', () => {
 
     it('should get empty html page', done => {
         const url = [TEST_WEBSERVER_ADDRESS, 'empty.html'].join('/');
-        const pagePath = path.join(__dirname, 'pages/empty.html');
-        const pageHTML = fs.readFileSync(pagePath, { encoding: 'utf8' });
+        const pageHTML = fs.readFileSync(path.join(__dirname, 'pages/empty.html'), { encoding: 'utf8' });
 
         request(url).then(response => {
-            assert.equal(response.data.replace(/\s+/g, ''), pageHTML.replace(/\s+/g, ''));
+            assert.equal(removeSpaces(response.data), removeSpaces(pageHTML));
             done();
         }).catch(done);
     });
 
     it('should get html with css embedded', done => {
         const url = [TEST_WEBSERVER_ADDRESS, 'style.html'].join('/');
-        const cssContentBase64 = btoa([
-            'body:before {',
-            '  content: \'style.css inner text\';',
-            '}'
-        ].join('\n'));
+        const cssContent = fs.readFileSync(path.join(__dirname, 'pages/style.css'), { encoding: 'utf8' });
         request(url).then(response => {
-            assert.equal(response.data.toString().indexOf(cssContentBase64) > -1, true);
+            const embeds = getEmbedded(response.data);
+            assert.equal(embeds.length, 1);
+            const embeddedCSS = atob(embeds[0]);
+            assert.equal(removeSpaces(embeddedCSS), removeSpaces(cssContent));
             done();
         }).catch(done);
     });
 
     it('should get html with imported css embedded', done => {
         const url = [TEST_WEBSERVER_ADDRESS, 'import.html'].join('/');
-        const cssContentBase64 = btoa([
-            '@import \'data:text/css;base64,',
-            '\';'
-        ].join(btoa([
-            'body:before {',
-            '  content: \'style.css inner text\';',
-            '}'
-        ].join('\n'))));
+        const cssContent = fs.readFileSync(path.join(__dirname, 'pages/style.css'), { encoding: 'utf8' });
         request(url).then(response => {
-            assert.equal(response.data.toString().indexOf(cssContentBase64) > -1, true);
+            const embeds = getEmbedded(response.data);
+            assert.equal(embeds.length, 1);
+            const embeddedEmbeds = getEmbedded(atob(embeds[0]));
+            assert.equal(embeddedEmbeds.length, 1);
+            const deepCSS = atob(embeddedEmbeds[0]);
+            assert.equal(removeSpaces(deepCSS), removeSpaces(cssContent));
             done();
         }).catch(done);
     });
 
     it('should get html with script embedded', done => {
         const url = [TEST_WEBSERVER_ADDRESS, 'script.html'].join('/');
-        const jsContentBase64 = btoa([
-            'console.log(\'hello\');',
-            ''
-        ].join('\n'));
+        const jsContent = fs.readFileSync(path.join(__dirname, 'pages/script.js'), { encoding: 'utf8' });
         request(url).then(response => {
-            assert.equal(response.data.toString().indexOf(jsContentBase64) > -1, true);
+            const embeds = getEmbedded(response.data);
+            assert.equal(embeds.length, 1);
+            const embeddedJS = atob(embeds[0]);
+            assert.equal(removeSpaces(embeddedJS), removeSpaces(jsContent));
             done();
         }).catch(done);
     });
@@ -91,7 +90,9 @@ describe('Axios-inline', () => {
         const pngContent = fs.readFileSync(pngPath);
         const pngContentBase64 = btoa(pngContent);
         request(url).then(response => {
-            assert.equal(response.data.toString().indexOf(pngContentBase64) > -1, true);
+            const embeds = getEmbedded(response.data);
+            assert.equal(embeds.length, 1);
+            assert.equal(embeds[0], pngContentBase64);
             done();
         }).catch(done);
     });
@@ -99,12 +100,12 @@ describe('Axios-inline', () => {
     it('should get html with iframe embedded', done => {
         const url = [TEST_WEBSERVER_ADDRESS, 'iframe.html'].join('/');
         const iframePath = path.join(__dirname, 'pages/empty.html');
-        const iframeContent = fs.readFileSync(iframePath, { encoding: 'utf8' }).replace(/\s+/g, '');
+        const iframeContent = fs.readFileSync(iframePath, { encoding: 'utf8' });
         request(url).then(response => {
             const embeds = getEmbedded(response.data);
             assert.equal(embeds.length, 1);
-            const embeddedIframe = atob(embeds[0]).replace(/\s+/g, '');
-            assert.equal(iframeContent, embeddedIframe);
+            const embeddedIframe = atob(embeds[0]);
+            assert.equal(removeSpaces(iframeContent), removeSpaces(embeddedIframe));
             done();
         }).catch(done);
     });
